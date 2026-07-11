@@ -1,0 +1,27 @@
+# Build
+build/
+cmake-build-*/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# Runtime data
+data/runtime/
+temp/
+
+# Secrets
+.env
+*_key*
+*_secret*
+*_token*
+*_password*
+config/local*
