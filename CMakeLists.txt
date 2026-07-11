@@ -5,12 +5,22 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+find_library(SQLITE3_LIBRARY
+    NAMES sqlite3 libsqlite3 libsqlite3.dll
+    PATHS "C:/msys64/ucrt64/lib"
+    REQUIRED
+)
+
 add_executable(index_fund_monitor
     src/main.cpp
     src/cli/parser.cpp
+    src/db/database.cpp
+    src/db/schema.cpp
 )
 
 target_include_directories(index_fund_monitor PRIVATE include)
+
+target_link_libraries(index_fund_monitor PRIVATE ${SQLITE3_LIBRARY})
 
 target_compile_options(index_fund_monitor PRIVATE
     -Wall -Wextra -Wpedantic -Werror
@@ -38,3 +48,12 @@ add_test_target(test_models
     src/models/models.cpp
     src/models/validation.cpp
 )
+
+add_test_target(test_database
+    tests/test_database.cpp
+    src/db/database.cpp
+    src/db/schema.cpp
+    src/models/models.cpp
+)
+
+target_link_libraries(test_database PRIVATE ${SQLITE3_LIBRARY})

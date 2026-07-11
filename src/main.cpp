@@ -1,8 +1,11 @@
 #include <cstdlib>
+#include <filesystem>
 #include <iostream>
 #include <string_view>
 
 #include "index_fund_monitor/cli/parser.hpp"
+#include "index_fund_monitor/db/database.hpp"
+#include "index_fund_monitor/db/schema.hpp"
 #include "index_fund_monitor/version.hpp"
 
 namespace {
@@ -42,13 +45,42 @@ void print_version(std::ostream& os) {
     os << PROJECT_NAME << " " << PROJECT_VERSION << std::endl;
 }
 
-void print_not_implemented(std::ostream& os, CommandType cmd) {
-    os << "Command '" << Parser::command_name(cmd) << "' is not yet implemented." << std::endl;
+int cmd_init(const ParseResult& result) {
+    auto it = result.options.find("--database");
+    std::string db_path = (it != result.options.end()) ? it->second : default_database_path();
+
+    // Auto-create parent directory
+    std::error_code ec;
+    auto parent = std::filesystem::path(db_path).parent_path();
+    if (!parent.empty()) {
+        std::filesystem::create_directories(parent, ec);
+        if (ec) {
+            std::cerr << "Error: Cannot create directory " << parent << ": " << ec.message() << std::endl;
+            return 1;
+        }
+    }
+
+    Database db;
+    if (!db.open(db_path)) {
+        std::cerr << "Error: Cannot open database " << db_path << ": " << db.last_error() << std::endl;
+        return 1;
+    }
+
+    if (!initialize_schema(db)) {
+        std::cerr << "Error: Failed to initialize schema." << std::endl;
+        return 1;
+    }
+
+    int version = get_schema_version(db);
+    std::cout << "Database initialized: " << db_path << "\n"
+              << "Schema version: " << version << std::endl;
+    return 0;
 }
 
 int dispatch(const ParseResult& result) {
     switch (result.command) {
         case CommandType::Init:
+            return cmd_init(result);
         case CommandType::FundAdd:
         case CommandType::FundList:
         case CommandType::FundRemove:
@@ -60,7 +92,7 @@ int dispatch(const ParseResult& result) {
         case CommandType::AlertRemove:
         case CommandType::AlertCheck:
         case CommandType::Export:
-            print_not_implemented(std::cout, result.command);
+            std::cout << "Command '" << Parser::command_name(result.command) << "' is not yet implemented." << std::endl;
             return 0;
         default:
             return 0;
