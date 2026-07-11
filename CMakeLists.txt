@@ -70,3 +70,14 @@ add_test_target(test_fund_repository
 )
 
 target_link_libraries(test_fund_repository PRIVATE ${SQLITE3_LIBRARY})
+
+add_test_target(test_data_providers
+    tests/test_data_providers.cpp
+    src/data/mock_fund_directory_provider.cpp
+    src/data/mock_index_valuation_provider.cpp
+    src/data/mock_fund_distribution_provider.cpp
+    src/data/mock_price_provider.cpp
+    src/models/models.cpp
+)
+
+target_include_directories(test_data_providers PRIVATE "C:/msys64/ucrt64/include")

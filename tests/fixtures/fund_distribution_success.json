@@ -1,0 +1,11 @@
+[
+    {
+        "symbol": "510300",
+        "amount_per_share": 0.50,
+        "ex_date": "2026-06-01",
+        "record_date": "2026-06-02",
+        "pay_date": "2026-06-10",
+        "currency": "CNY",
+        "source": "mock"
+    }
+]

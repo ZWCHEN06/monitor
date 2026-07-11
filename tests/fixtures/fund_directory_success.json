@@ -1,0 +1,26 @@
+[
+    {
+        "symbol": "510300",
+        "exchange": "SSE",
+        "name": "沪深300ETF",
+        "manager": "华夏基金管理有限公司",
+        "fund_type": "股票型",
+        "listing_status": "上市"
+    },
+    {
+        "symbol": "510050",
+        "exchange": "SSE",
+        "name": "上证50ETF",
+        "manager": "华夏基金管理有限公司",
+        "fund_type": "股票型",
+        "listing_status": "上市"
+    },
+    {
+        "symbol": "159915",
+        "exchange": "SZSE",
+        "name": "创业板ETF",
+        "manager": "易方达基金管理有限公司",
+        "fund_type": "股票型",
+        "listing_status": "上市"
+    }
+]

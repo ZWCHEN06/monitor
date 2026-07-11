@@ -1,0 +1,20 @@
+[
+    {
+        "benchmark_code": "000300",
+        "valuation_date": "2026-07-10",
+        "pe_ttm": 12.5,
+        "pb": 1.5,
+        "dividend_yield": 0.035,
+        "source": "mock",
+        "collected_at": "2026-07-10T15:00:00Z"
+    },
+    {
+        "benchmark_code": "000905",
+        "valuation_date": "2026-07-10",
+        "pe_ttm": 18.2,
+        "pb": 2.1,
+        "dividend_yield": 0.028,
+        "source": "mock",
+        "collected_at": "2026-07-10T15:00:00Z"
+    }
+]
