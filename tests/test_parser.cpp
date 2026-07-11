@@ -148,11 +148,12 @@ void test_missing_required() {
         CHECK(r.error.find("--symbol") != std::string::npos, "error mentions --symbol");
     }
 
-    // fund remove missing --market
+    // fund remove with only --symbol (--market optional now)
     {
         Argv a{"prog", "fund", "remove", "--symbol", "510300"};
         auto r = p.parse(a.argc, a.ptrs.data());
-        CHECK(!r.error.empty(), "fund remove missing --market");
+        CHECK(r.error.empty(), "fund remove with --symbol only succeeds");
+        CHECK_EQ(r.command, CommandType::FundRemove, "fund remove command");
     }
 
     // show missing --symbol

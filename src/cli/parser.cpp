@@ -73,8 +73,8 @@ std::string Parser::command_name(CommandType cmd) {
 std::vector<std::string_view> Parser::required_options(CommandType cmd) {
     using CT = CommandType;
     switch (cmd) {
-        case CT::FundAdd:    return {"--market", "--symbol", "--name"};
-        case CT::FundRemove: return {"--market", "--symbol"};
+        case CT::FundAdd:    return {"--symbol", "--name"};
+        case CT::FundRemove: return {"--symbol"};
         case CT::Show:       return {"--symbol"};
         case CT::Export:     return {"--output"};
         default:             return {};

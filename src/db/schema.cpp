@@ -125,25 +125,25 @@ CREATE TABLE IF NOT EXISTS alert_rule (
 
 bool initialize_schema(Database& db) {
     if (!db.execute("BEGIN TRANSACTION")) {
-        std::cerr << "Error: Failed to start transaction: " << db.last_error() << std::endl;
+        std::cerr << "错误：无法开始事务：" << db.last_error() << std::endl;
         return false;
     }
 
     if (!db.execute_batch(schema_sql())) {
-        std::cerr << "Error: Failed to create tables: " << db.last_error() << std::endl;
+        std::cerr << "错误：无法创建数据表：" << db.last_error() << std::endl;
         db.execute("ROLLBACK");
         return false;
     }
 
     // Record schema version
     if (!db.execute("INSERT OR IGNORE INTO schema_version (version, applied_at) VALUES (1, datetime('now'))")) {
-        std::cerr << "Error: Failed to record schema version: " << db.last_error() << std::endl;
+        std::cerr << "错误：无法记录数据库版本：" << db.last_error() << std::endl;
         db.execute("ROLLBACK");
         return false;
     }
 
     if (!db.execute("COMMIT")) {
-        std::cerr << "Error: Failed to commit transaction: " << db.last_error() << std::endl;
+        std::cerr << "错误：无法提交事务：" << db.last_error() << std::endl;
         return false;
     }
 

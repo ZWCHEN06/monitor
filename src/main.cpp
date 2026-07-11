@@ -24,12 +24,12 @@ Database open_db(const ParseResult& result, std::string& out_path) {
 
     Database db;
     if (!db.open(db_path)) {
-        std::cerr << "Error: Cannot open database " << db_path << ": " << db.last_error() << std::endl;
+        std::cerr << "错误：无法打开数据库 " << db_path << "：" << db.last_error() << std::endl;
         return db;
     }
 
     if (!initialize_schema(db)) {
-        std::cerr << "Error: Failed to initialize schema." << std::endl;
+        std::cerr << "错误：初始化数据库结构失败。" << std::endl;
         db.close();
         return db;
     }
@@ -41,31 +41,31 @@ Database open_db(const ParseResult& result, std::string& out_path) {
 void print_help(std::ostream& os) {
     os << PROJECT_NAME << " - " << PROJECT_DESC << "\n"
        << "\n"
-       << "Usage:\n"
-       << "  " << PROJECT_NAME << " <command> [options]\n"
+       << "用法：\n"
+       << "  " << PROJECT_NAME << " <命令> [选项]\n"
        << "\n"
-       << "Commands:\n"
-       << "  init              Initialize database\n"
-       << "  fund add          Add ETF to watchlist\n"
-       << "  fund list         List all watched ETFs\n"
-       << "  fund remove       Remove ETF from watchlist\n"
-       << "  update            Update valuation data\n"
-       << "  show              Show ETF details\n"
-       << "  screen            Filter ETFs by conditions\n"
-       << "  alert add         Add alert rule\n"
-       << "  alert list        List alert rules\n"
-       << "  alert remove      Remove alert rule\n"
-       << "  alert check       Check alert rules\n"
-       << "  export            Export data to CSV\n"
+       << "命令：\n"
+       << "  init              初始化数据库\n"
+       << "  fund add          添加ETF到关注列表\n"
+       << "  fund list         查看所有已关注ETF\n"
+       << "  fund remove       从关注列表移除ETF\n"
+       << "  update            更新估值数据\n"
+       << "  show              查看ETF详情\n"
+       << "  screen            按条件筛选ETF\n"
+       << "  alert add         添加预警规则\n"
+       << "  alert list        查看预警规则\n"
+       << "  alert remove      删除预警规则\n"
+       << "  alert check       检查预警规则\n"
+       << "  export            导出数据到CSV\n"
        << "\n"
-       << "General options:\n"
-       << "  --help            Show this help message\n"
-       << "  --version         Show version information\n"
-       << "  --database <path> Database file path\n"
-       << "  --market  <code>  Market code (CN)\n"
-       << "  --symbol  <code>  ETF symbol (6 digits)\n"
-       << "  --name    <name>  ETF name\n"
-       << "  --output  <file>  Output file path\n"
+       << "通用选项：\n"
+       << "  --help            显示此帮助信息\n"
+       << "  --version         显示版本信息\n"
+       << "  --database <路径> 数据库文件路径\n"
+       << "  --market  <代码>  市场代码（CN）\n"
+       << "  --symbol  <代码>  ETF代码（6位数字）\n"
+       << "  --name    <名称>  ETF名称\n"
+       << "  --output  <文件>  输出文件路径\n"
        << std::endl;
 }
 
@@ -79,8 +79,8 @@ int cmd_init(const ParseResult& result) {
     if (!db.is_open()) return 1;
 
     int version = get_schema_version(db);
-    std::cout << "Database initialized: " << db_path << "\n"
-              << "Schema version: " << version << std::endl;
+    std::cout << "数据库已初始化：" << db_path << "\n"
+              << "数据库版本：" << version << std::endl;
     return 0;
 }
 
@@ -88,16 +88,14 @@ int cmd_fund_add(const ParseResult& result) {
     std::string symbol = result.options.at("--symbol");
     std::string name = result.options.at("--name");
 
-    // Validate symbol
     if (!is_valid_etf_code(symbol)) {
-        std::cerr << "Error: Invalid ETF code '" << symbol << "'. Must be 6 digits." << std::endl;
+        std::cerr << "错误：无效的ETF代码 '" << symbol << "'，必须是6位数字。" << std::endl;
         return 1;
     }
 
-    // Deduce exchange
     auto exchange = deduce_exchange(symbol);
     if (!exchange.has_value()) {
-        std::cerr << "Error: Cannot determine exchange for symbol '" << symbol << "'." << std::endl;
+        std::cerr << "错误：无法确定代码 '" << symbol << "' 所属交易所。" << std::endl;
         return 1;
     }
 
@@ -107,16 +105,16 @@ int cmd_fund_add(const ParseResult& result) {
 
     FundRepository repo(db);
     if (repo.exists(symbol, exchange.value())) {
-        std::cerr << "Error: ETF " << symbol << " already exists in watchlist." << std::endl;
+        std::cerr << "错误：ETF " << symbol << " 已在关注列表中。" << std::endl;
         return 1;
     }
 
     if (!repo.add(symbol, exchange.value(), name)) {
-        std::cerr << "Error: Failed to add ETF " << symbol << "." << std::endl;
+        std::cerr << "错误：添加ETF " << symbol << " 失败。" << std::endl;
         return 1;
     }
 
-    std::cout << "Added: " << to_string(exchange.value()) << "." << symbol << " " << name << std::endl;
+    std::cout << "已添加：" << to_string(exchange.value()) << "." << symbol << " " << name << std::endl;
     return 0;
 }
 
@@ -129,11 +127,11 @@ int cmd_fund_list(const ParseResult& result) {
     auto records = repo.list();
 
     if (records.empty()) {
-        std::cout << "No ETFs in watchlist." << std::endl;
+        std::cout << "关注列表为空。" << std::endl;
         return 0;
     }
 
-    std::cout << "ETF Watchlist:\n";
+    std::cout << "ETF关注列表：\n";
     for (const auto& r : records) {
         std::cout << "  " << to_string(r.exchange) << "." << r.symbol << "  " << r.name << std::endl;
     }
@@ -145,7 +143,7 @@ int cmd_fund_remove(const ParseResult& result) {
 
     auto exchange = deduce_exchange(symbol);
     if (!exchange.has_value()) {
-        std::cerr << "Error: Cannot determine exchange for symbol '" << symbol << "'." << std::endl;
+        std::cerr << "错误：无法确定代码 '" << symbol << "' 所属交易所。" << std::endl;
         return 1;
     }
 
@@ -155,16 +153,16 @@ int cmd_fund_remove(const ParseResult& result) {
 
     FundRepository repo(db);
     if (!repo.exists(symbol, exchange.value())) {
-        std::cerr << "Error: ETF " << symbol << " not found in watchlist." << std::endl;
+        std::cerr << "错误：ETF " << symbol << " 不在关注列表中。" << std::endl;
         return 1;
     }
 
     if (!repo.remove(symbol, exchange.value())) {
-        std::cerr << "Error: Failed to remove ETF " << symbol << "." << std::endl;
+        std::cerr << "错误：移除ETF " << symbol << " 失败。" << std::endl;
         return 1;
     }
 
-    std::cout << "Removed: " << to_string(exchange.value()) << "." << symbol << std::endl;
+    std::cout << "已移除：" << to_string(exchange.value()) << "." << symbol << std::endl;
     return 0;
 }
 
@@ -186,7 +184,7 @@ int dispatch(const ParseResult& result) {
         case CommandType::AlertRemove:
         case CommandType::AlertCheck:
         case CommandType::Export:
-            std::cout << "Command '" << Parser::command_name(result.command) << "' is not yet implemented." << std::endl;
+            std::cout << "命令 '" << Parser::command_name(result.command) << "' 尚未实现。" << std::endl;
             return 0;
         default:
             return 0;
@@ -200,8 +198,8 @@ int main(int argc, char* argv[]) {
     auto result = parser.parse(argc, argv);
 
     if (!result.error.empty()) {
-        std::cerr << "Error: " << result.error << "\n"
-                  << "Use --help for usage information." << std::endl;
+        std::cerr << "错误：" << result.error << "\n"
+                  << "使用 --help 查看帮助信息。" << std::endl;
         return 1;
     }
 
