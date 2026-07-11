@@ -95,3 +95,13 @@ add_test_target(test_http_client
 )
 
 target_link_libraries(test_http_client PRIVATE ${CURL_LIBRARY})
+
+target_include_directories(test_http_client PRIVATE "C:/msys64/ucrt64/include")
+
+add_test_target(test_util
+    tests/test_util.cpp
+    src/util/json_reader.cpp
+    src/util/csv_reader.cpp
+)
+
+target_include_directories(test_util PRIVATE "C:/msys64/ucrt64/include")
