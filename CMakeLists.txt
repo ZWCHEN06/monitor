@@ -16,6 +16,9 @@ add_executable(index_fund_monitor
     src/cli/parser.cpp
     src/db/database.cpp
     src/db/schema.cpp
+    src/db/fund_repository.cpp
+    src/models/models.cpp
+    src/models/validation.cpp
 )
 
 target_include_directories(index_fund_monitor PRIVATE include)
@@ -57,3 +60,13 @@ add_test_target(test_database
 )
 
 target_link_libraries(test_database PRIVATE ${SQLITE3_LIBRARY})
+
+add_test_target(test_fund_repository
+    tests/test_fund_repository.cpp
+    src/db/database.cpp
+    src/db/schema.cpp
+    src/db/fund_repository.cpp
+    src/models/models.cpp
+)
+
+target_link_libraries(test_fund_repository PRIVATE ${SQLITE3_LIBRARY})
