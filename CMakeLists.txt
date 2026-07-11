@@ -18,15 +18,23 @@ target_compile_options(index_fund_monitor PRIVATE
     -Wshadow -Wnon-virtual-dtor
 )
 
-add_executable(test_parser
+function(add_test_target NAME)
+    add_executable(${NAME} ${ARGN})
+    target_include_directories(${NAME} PRIVATE include)
+    target_compile_options(${NAME} PRIVATE
+        -Wall -Wextra -Wpedantic -Werror
+        -Wconversion -Wsign-conversion
+        -Wshadow -Wnon-virtual-dtor
+    )
+endfunction()
+
+add_test_target(test_parser
     tests/test_parser.cpp
     src/cli/parser.cpp
 )
 
-target_include_directories(test_parser PRIVATE include)
-
-target_compile_options(test_parser PRIVATE
-    -Wall -Wextra -Wpedantic -Werror
-    -Wconversion -Wsign-conversion
-    -Wshadow -Wnon-virtual-dtor
+add_test_target(test_models
+    tests/test_models.cpp
+    src/models/models.cpp
+    src/models/validation.cpp
 )
