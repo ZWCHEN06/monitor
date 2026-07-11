@@ -81,3 +81,17 @@ add_test_target(test_data_providers
 )
 
 target_include_directories(test_data_providers PRIVATE "C:/msys64/ucrt64/include")
+
+find_library(CURL_LIBRARY
+    NAMES libcurl curl libcurl.dll
+    PATHS "C:/msys64/ucrt64/lib"
+    REQUIRED
+)
+
+add_test_target(test_http_client
+    tests/test_http_client.cpp
+    src/net/http_client.cpp
+    src/net/mock_http_client.cpp
+)
+
+target_link_libraries(test_http_client PRIVATE ${CURL_LIBRARY})
