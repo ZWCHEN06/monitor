@@ -14,6 +14,7 @@ find_library(SQLITE3_LIBRARY
 add_executable(index_fund_monitor
     src/main.cpp
     src/cli/parser.cpp
+    src/data/eastmoney_etf_provider.cpp
     src/data/mock_fund_distribution_provider.cpp
     src/data/mock_index_valuation_provider.cpp
     src/data/mock_price_provider.cpp
@@ -125,3 +126,15 @@ add_test_target(test_update
 
 target_link_libraries(test_update PRIVATE ${SQLITE3_LIBRARY})
 target_include_directories(test_update PRIVATE "C:/msys64/ucrt64/include")
+
+add_test_target(test_eastmoney_etf
+    tests/test_eastmoney_etf.cpp
+    src/data/eastmoney_etf_provider.cpp
+    src/db/database.cpp
+    src/db/fund_repository.cpp
+    src/net/mock_http_client.cpp
+    src/models/models.cpp
+)
+
+target_link_libraries(test_eastmoney_etf PRIVATE ${CURL_LIBRARY} ${SQLITE3_LIBRARY})
+target_include_directories(test_eastmoney_etf PRIVATE "C:/msys64/ucrt64/include")
