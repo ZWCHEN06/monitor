@@ -135,6 +135,27 @@ void test_correct_commands() {
         CHECK_EQ(r.command, CommandType::Export, "export command");
         CHECK(r.error.empty(), "export no error");
     }
+
+    // benchmark set
+    {
+        Argv a{"prog", "benchmark", "set", "--symbol", "510300", "--benchmark-code", "000300", "--benchmark-name", "沪深300", "--provider", "CSI"};
+        auto r = p.parse(a.argc, a.ptrs.data());
+        CHECK_EQ(r.command, CommandType::BenchmarkSet, "benchmark set command");
+        CHECK_EQ(r.options["--symbol"], "510300", "benchmark set --symbol");
+        CHECK_EQ(r.options["--benchmark-code"], "000300", "benchmark set --benchmark-code");
+        CHECK_EQ(r.options["--benchmark-name"], "沪深300", "benchmark set --benchmark-name");
+        CHECK_EQ(r.options["--provider"], "CSI", "benchmark set --provider");
+        CHECK(r.error.empty(), "benchmark set no error");
+    }
+
+    // benchmark show
+    {
+        Argv a{"prog", "benchmark", "show", "--symbol", "510300"};
+        auto r = p.parse(a.argc, a.ptrs.data());
+        CHECK_EQ(r.command, CommandType::BenchmarkShow, "benchmark show command");
+        CHECK_EQ(r.options["--symbol"], "510300", "benchmark show --symbol");
+        CHECK(r.error.empty(), "benchmark show no error");
+    }
 }
 
 void test_missing_required() {
@@ -169,6 +190,27 @@ void test_missing_required() {
         auto r = p.parse(a.argc, a.ptrs.data());
         CHECK(!r.error.empty(), "export missing --output");
     }
+
+    // benchmark set missing --symbol
+    {
+        Argv a{"prog", "benchmark", "set", "--benchmark-code", "000300", "--benchmark-name", "沪深300"};
+        auto r = p.parse(a.argc, a.ptrs.data());
+        CHECK(!r.error.empty(), "benchmark set missing --symbol");
+    }
+
+    // benchmark set missing --benchmark-code
+    {
+        Argv a{"prog", "benchmark", "set", "--symbol", "510300", "--benchmark-name", "沪深300"};
+        auto r = p.parse(a.argc, a.ptrs.data());
+        CHECK(!r.error.empty(), "benchmark set missing --benchmark-code");
+    }
+
+    // benchmark show missing --symbol
+    {
+        Argv a{"prog", "benchmark", "show"};
+        auto r = p.parse(a.argc, a.ptrs.data());
+        CHECK(!r.error.empty(), "benchmark show missing --symbol");
+    }
 }
 
 void test_unknown_command() {
@@ -191,6 +233,12 @@ void test_unknown_command() {
         Argv a{"prog", "alert", "unknown"};
         auto r = p.parse(a.argc, a.ptrs.data());
         CHECK(!r.error.empty(), "unknown alert subcommand");
+    }
+
+    {
+        Argv a{"prog", "benchmark", "unknown"};
+        auto r = p.parse(a.argc, a.ptrs.data());
+        CHECK(!r.error.empty(), "unknown benchmark subcommand");
     }
 }
 

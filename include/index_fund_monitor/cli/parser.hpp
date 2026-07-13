@@ -11,6 +11,8 @@ enum class CommandType {
     FundAdd,
     FundList,
     FundRemove,
+    BenchmarkSet,
+    BenchmarkShow,
     Update,
     Show,
     Screen,

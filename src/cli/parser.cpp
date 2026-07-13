@@ -42,6 +42,12 @@ CommandType match_command(std::string_view cmd, std::string_view sub) {
         return CT::None;
     }
 
+    if (cmd == "benchmark") {
+        if (sub == "set")  return CT::BenchmarkSet;
+        if (sub == "show") return CT::BenchmarkShow;
+        return CT::None;
+    }
+
     return CT::None;
 }
 
@@ -58,6 +64,8 @@ std::string Parser::command_name(CommandType cmd) {
         case CT::FundAdd:     return "fund add";
         case CT::FundList:    return "fund list";
         case CT::FundRemove:  return "fund remove";
+        case CT::BenchmarkSet:  return "benchmark set";
+        case CT::BenchmarkShow: return "benchmark show";
         case CT::Update:      return "update";
         case CT::Show:        return "show";
         case CT::Screen:      return "screen";
@@ -73,6 +81,8 @@ std::string Parser::command_name(CommandType cmd) {
 std::vector<std::string_view> Parser::required_options(CommandType cmd) {
     using CT = CommandType;
     switch (cmd) {
+        case CT::BenchmarkSet: return {"--symbol", "--benchmark-code", "--benchmark-name"};
+        case CT::BenchmarkShow: return {"--symbol"};
         case CT::FundAdd:    return {"--symbol", "--name"};
         case CT::FundRemove: return {"--symbol"};
         case CT::Show:       return {"--symbol"};
@@ -86,7 +96,7 @@ namespace {
 const std::unordered_set<std::string>& known_options() {
     static const std::unordered_set<std::string> opts = {
         "--database", "--market", "--symbol", "--name",
-        "--benchmark-code", "--benchmark-name",
+        "--benchmark-code", "--benchmark-name", "--provider",
         "--output", "--all",
     };
     return opts;

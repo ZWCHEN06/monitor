@@ -18,6 +18,7 @@ add_executable(index_fund_monitor
     src/data/mock_fund_distribution_provider.cpp
     src/data/mock_index_valuation_provider.cpp
     src/data/mock_price_provider.cpp
+    src/db/benchmark_repository.cpp
     src/db/database.cpp
     src/db/schema.cpp
     src/db/fund_repository.cpp
@@ -138,3 +139,14 @@ add_test_target(test_eastmoney_etf
 
 target_link_libraries(test_eastmoney_etf PRIVATE ${CURL_LIBRARY} ${SQLITE3_LIBRARY})
 target_include_directories(test_eastmoney_etf PRIVATE "C:/msys64/ucrt64/include")
+
+add_test_target(test_benchmark
+    tests/test_benchmark.cpp
+    src/db/benchmark_repository.cpp
+    src/db/database.cpp
+    src/db/fund_repository.cpp
+    src/db/schema.cpp
+    src/models/models.cpp
+)
+
+target_link_libraries(test_benchmark PRIVATE ${SQLITE3_LIBRARY})

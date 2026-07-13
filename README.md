@@ -53,8 +53,8 @@ A lightweight command-line tool for monitoring A-share index ETFs' valuation met
 | 任务7：HTTP客户端 | 已完成 |
 | 任务8：JSON和CSV解析工具 | 已完成 |
 | 任务9：Mock数据更新流程 | 已完成 |
-| 任务10：沪深ETF基础目录 | 进行中 |
-| 任务11：ETF与指数映射 | 未开始 |
+| 任务10：沪深ETF基础目录 | 已完成 |
+| 任务11：ETF与指数映射 | 进行中 |
 | 任务12：指数估值数据源 | 未开始 |
 | 任务13：基金详情查询 | 未开始 |
 | 任务14：历史估值百分位 | 未开始 |
