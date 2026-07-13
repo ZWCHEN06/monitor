@@ -1,0 +1,14 @@
+[
+    {
+        "symbol": "510300",
+        "trade_date": "2026-07-10",
+        "open": 4.12,
+        "close": 4.15,
+        "high": 4.18,
+        "low": 4.10,
+        "volume": 2500000,
+        "amount": 10375000,
+        "source": "mock",
+        "collected_at": "2026-07-10T15:00:00Z"
+    }
+]

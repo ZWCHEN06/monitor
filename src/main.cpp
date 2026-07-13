@@ -8,6 +8,7 @@
 #include "index_fund_monitor/db/fund_repository.hpp"
 #include "index_fund_monitor/db/schema.hpp"
 #include "index_fund_monitor/models/validation.hpp"
+#include "index_fund_monitor/update/updater.hpp"
 #include "index_fund_monitor/version.hpp"
 
 namespace {
@@ -166,6 +167,32 @@ int cmd_fund_remove(const ParseResult& result) {
     return 0;
 }
 
+int cmd_update(const ParseResult& result) {
+    bool has_all = result.options.contains("--all");
+    bool has_symbol = result.options.contains("--symbol");
+
+    if (!has_all && !has_symbol) {
+        std::cerr << "错误：update 命令需要 --all 或 --symbol 参数。" << std::endl;
+        return 1;
+    }
+
+    std::string db_path;
+    auto db = open_db(result, db_path);
+    if (!db.is_open()) return 1;
+
+    Updater updater(db, "tests/fixtures");
+    UpdateSummary summary;
+
+    if (has_symbol) {
+        summary = updater.update_symbol(result.options.at("--symbol"));
+    } else {
+        summary = updater.update_all();
+    }
+
+    summary.print();
+    return summary.failed > 0 ? 1 : 0;
+}
+
 int dispatch(const ParseResult& result) {
     switch (result.command) {
         case CommandType::Init:
@@ -177,6 +204,7 @@ int dispatch(const ParseResult& result) {
         case CommandType::FundRemove:
             return cmd_fund_remove(result);
         case CommandType::Update:
+            return cmd_update(result);
         case CommandType::Show:
         case CommandType::Screen:
         case CommandType::AlertAdd:

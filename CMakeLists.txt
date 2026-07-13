@@ -14,14 +14,19 @@ find_library(SQLITE3_LIBRARY
 add_executable(index_fund_monitor
     src/main.cpp
     src/cli/parser.cpp
+    src/data/mock_fund_distribution_provider.cpp
+    src/data/mock_index_valuation_provider.cpp
+    src/data/mock_price_provider.cpp
     src/db/database.cpp
     src/db/schema.cpp
     src/db/fund_repository.cpp
     src/models/models.cpp
     src/models/validation.cpp
+    src/update/updater.cpp
 )
 
 target_include_directories(index_fund_monitor PRIVATE include)
+target_include_directories(index_fund_monitor PRIVATE "C:/msys64/ucrt64/include")
 
 target_link_libraries(index_fund_monitor PRIVATE ${SQLITE3_LIBRARY})
 
@@ -105,3 +110,18 @@ add_test_target(test_util
 )
 
 target_include_directories(test_util PRIVATE "C:/msys64/ucrt64/include")
+
+add_test_target(test_update
+    tests/test_update.cpp
+    src/data/mock_fund_distribution_provider.cpp
+    src/data/mock_index_valuation_provider.cpp
+    src/data/mock_price_provider.cpp
+    src/db/database.cpp
+    src/db/schema.cpp
+    src/db/fund_repository.cpp
+    src/models/models.cpp
+    src/update/updater.cpp
+)
+
+target_link_libraries(test_update PRIVATE ${SQLITE3_LIBRARY})
+target_include_directories(test_update PRIVATE "C:/msys64/ucrt64/include")
