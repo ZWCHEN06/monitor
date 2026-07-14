@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS fund_benchmark (
     provider TEXT,
     effective_date TEXT,
     source TEXT NOT NULL,
+    is_current INTEGER NOT NULL DEFAULT 1 CHECK (is_current IN (0, 1)),
     UNIQUE(fund_symbol, benchmark_code, effective_date),
     FOREIGN KEY (benchmark_code) REFERENCES benchmark_index(code)
 );
@@ -121,6 +122,53 @@ CREATE TABLE IF NOT EXISTS alert_rule (
 )SQL";
 }
 
+bool has_current_mapping_column(Database& db) {
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db.handle(), "PRAGMA table_info(fund_benchmark)", -1, &stmt, nullptr) != SQLITE_OK) {
+        return false;
+    }
+
+    bool found = false;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        const auto* name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        if (name != nullptr && std::string(name) == "is_current") {
+            found = true;
+            break;
+        }
+    }
+    sqlite3_finalize(stmt);
+    return found;
+}
+
+bool migrate_current_benchmark_mapping(Database& db) {
+    const bool added_current_mapping_column = !has_current_mapping_column(db);
+    if (added_current_mapping_column &&
+        !db.execute("ALTER TABLE fund_benchmark ADD COLUMN is_current INTEGER NOT NULL DEFAULT 1 CHECK (is_current IN (0, 1))")) {
+        return false;
+    }
+
+    constexpr const char* normalize_current_mapping = R"SQL(
+        UPDATE fund_benchmark
+        SET is_current = CASE WHEN id = (
+            SELECT latest.id
+            FROM fund_benchmark AS latest
+            WHERE latest.fund_symbol = fund_benchmark.fund_symbol
+            ORDER BY latest.effective_date DESC, latest.id DESC
+            LIMIT 1
+        ) THEN 1 ELSE 0 END
+    )SQL";
+    // Only normalize legacy rows when introducing the column. On later starts,
+    // is_current is the source of truth: a same-day A -> B -> A switch can make
+    // an older history row current again.
+    if (added_current_mapping_column && !db.execute(normalize_current_mapping)) {
+        return false;
+    }
+
+    return db.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_fund_benchmark_current "
+        "ON fund_benchmark(fund_symbol) WHERE is_current = 1");
+}
+
 } // namespace
 
 bool initialize_schema(Database& db) {
@@ -135,8 +183,15 @@ bool initialize_schema(Database& db) {
         return false;
     }
 
+    if (!migrate_current_benchmark_mapping(db)) {
+        std::cerr << "错误：无法迁移ETF当前跟踪指数映射：" << db.last_error() << std::endl;
+        db.execute("ROLLBACK");
+        return false;
+    }
+
     // Record schema version
-    if (!db.execute("INSERT OR IGNORE INTO schema_version (version, applied_at) VALUES (1, datetime('now'))")) {
+    if (!db.execute("INSERT OR IGNORE INTO schema_version (version, applied_at) VALUES (1, datetime('now'))") ||
+        !db.execute("INSERT OR IGNORE INTO schema_version (version, applied_at) VALUES (2, datetime('now'))")) {
         std::cerr << "错误：无法记录数据库版本：" << db.last_error() << std::endl;
         db.execute("ROLLBACK");
         return false;

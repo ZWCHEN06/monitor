@@ -5,6 +5,7 @@
 
 #include <sqlite3.h>
 
+#include "index_fund_monitor/db/benchmark_repository.hpp"
 #include "index_fund_monitor/db/database.hpp"
 #include "index_fund_monitor/db/fund_repository.hpp"
 #include "index_fund_monitor/db/schema.hpp"
@@ -210,6 +211,39 @@ void test_update_idempotent() {
     std::filesystem::remove(path);
 }
 
+void test_update_uses_current_mapping_after_same_day_switch() {
+    auto path = unique_db_path();
+    Database db;
+    db.open(path);
+    initialize_schema(db);
+
+    FundRepository fund_repo(db);
+    fund_repo.add("510300", Exchange::SSE, "CSI 300 ETF");
+    BenchmarkRepository benchmark_repo(db);
+    CHECK(benchmark_repo.set("510300", "000300", "CSI 300", "CSI", "manual"),
+          "set initial A mapping");
+    CHECK(benchmark_repo.set("510300", "000905", "CSI 500", "CSI", "manual"),
+          "switch mapping to B on the same day");
+    CHECK(benchmark_repo.set("510300", "000300", "CSI 300", "CSI", "manual"),
+          "switch mapping back to A on the same day");
+
+    Updater updater(db, "tests/fixtures");
+    auto summary = updater.update_symbol("510300");
+    CHECK_EQ(summary.success, 1, "update succeeds with the current mapping");
+
+    sqlite3_stmt* stmt = nullptr;
+    const char* sql = "SELECT benchmark_code FROM index_valuation";
+    CHECK(sqlite3_prepare_v2(db.handle(), sql, -1, &stmt, nullptr) == SQLITE_OK,
+          "prepare valuation benchmark query");
+    CHECK(sqlite3_step(stmt) == SQLITE_ROW, "valuation is written after same-day switch");
+    CHECK_EQ(std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0))), "000300",
+             "updater uses the explicitly current A mapping instead of latest history row");
+    sqlite3_finalize(stmt);
+
+    db.close();
+    std::filesystem::remove(path);
+}
+
 void test_update_empty_watchlist() {
     auto path = unique_db_path();
     Database db;
@@ -277,6 +311,7 @@ int main() {
     test_update_symbol();
     test_update_no_benchmark_skipped();
     test_update_idempotent();
+    test_update_uses_current_mapping_after_same_day_switch();
     test_update_empty_watchlist();
     test_update_mixed_results();
     test_update_unknown_symbol();

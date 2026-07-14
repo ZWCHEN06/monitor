@@ -118,6 +118,7 @@ add_test_target(test_update
     src/data/mock_fund_distribution_provider.cpp
     src/data/mock_index_valuation_provider.cpp
     src/data/mock_price_provider.cpp
+    src/db/benchmark_repository.cpp
     src/db/database.cpp
     src/db/schema.cpp
     src/db/fund_repository.cpp

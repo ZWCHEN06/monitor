@@ -204,9 +204,7 @@ std::optional<Updater::BenchmarkMapping> Updater::find_benchmark(const std::stri
     const char* sql = R"(
         SELECT benchmark_code, benchmark_name, provider
         FROM fund_benchmark
-        WHERE fund_symbol = ?1
-        ORDER BY effective_date DESC
-        LIMIT 1
+        WHERE fund_symbol = ?1 AND is_current = 1
     )";
 
     sqlite3_stmt* stmt = nullptr;

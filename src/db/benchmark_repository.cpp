@@ -77,11 +77,36 @@ bool BenchmarkRepository::set(const std::string& fund_symbol,
         return false;
     }
 
-    // Insert fund_benchmark mapping
+    // A fund has at most one current mapping. Deactivate it before inserting or
+    // refreshing the requested mapping in the same transaction.
     std::string eff_date = today_date();
+    const char* deactivate_current = R"(
+        UPDATE fund_benchmark
+        SET is_current = 0
+        WHERE fund_symbol = ?1 AND is_current = 1
+    )";
+    stmt = nullptr;
+    if (sqlite3_prepare_v2(handle, deactivate_current, -1, &stmt, nullptr) != SQLITE_OK) {
+        db_.execute("ROLLBACK");
+        return false;
+    }
+    bind_text(stmt, 1, fund_symbol);
+    rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    if (rc != SQLITE_DONE) {
+        db_.execute("ROLLBACK");
+        return false;
+    }
+
     const char* ins_fb = R"(
-        INSERT INTO fund_benchmark (fund_symbol, benchmark_code, benchmark_name, provider, effective_date, source)
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+        INSERT INTO fund_benchmark
+            (fund_symbol, benchmark_code, benchmark_name, provider, effective_date, source, is_current)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, 1)
+        ON CONFLICT(fund_symbol, benchmark_code, effective_date) DO UPDATE SET
+            benchmark_name = excluded.benchmark_name,
+            provider = excluded.provider,
+            source = excluded.source,
+            is_current = 1
     )";
     stmt = nullptr;
     if (sqlite3_prepare_v2(handle, ins_fb, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -117,9 +142,7 @@ std::optional<BenchmarkRecord> BenchmarkRepository::get_current(const std::strin
     const char* sql = R"(
         SELECT id, fund_symbol, benchmark_code, benchmark_name, provider, effective_date, source
         FROM fund_benchmark
-        WHERE fund_symbol = ?1
-        ORDER BY effective_date DESC, id DESC
-        LIMIT 1
+        WHERE fund_symbol = ?1 AND is_current = 1
     )";
 
     sqlite3_stmt* stmt = nullptr;
@@ -146,7 +169,7 @@ std::vector<BenchmarkRecord> BenchmarkRepository::get_history(const std::string&
         SELECT id, fund_symbol, benchmark_code, benchmark_name, provider, effective_date, source
         FROM fund_benchmark
         WHERE fund_symbol = ?1
-        ORDER BY effective_date DESC, id DESC
+        ORDER BY is_current DESC, effective_date DESC, id DESC
     )";
 
     sqlite3_stmt* stmt = nullptr;

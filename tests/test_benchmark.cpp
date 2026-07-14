@@ -45,6 +45,19 @@ void add_fund(Database& db, const std::string& symbol, Exchange exchange, const 
     repo.add(symbol, exchange, name);
 }
 
+int current_mapping_count(Database& db, const std::string& symbol) {
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db.handle(),
+                           "SELECT COUNT(*) FROM fund_benchmark WHERE fund_symbol = ?1 AND is_current = 1",
+                           -1, &stmt, nullptr) != SQLITE_OK) {
+        return -1;
+    }
+    sqlite3_bind_text(stmt, 1, symbol.c_str(), -1, SQLITE_TRANSIENT);
+    const int count = sqlite3_step(stmt) == SQLITE_ROW ? sqlite3_column_int(stmt, 0) : -1;
+    sqlite3_finalize(stmt);
+    return count;
+}
+
 void test_set_benchmark() {
     auto path = unique_db_path();
     auto db = setup_db(path);
@@ -61,6 +74,7 @@ void test_set_benchmark() {
     CHECK_EQ(current->benchmark_name, "沪深300", "benchmark_name correct");
     CHECK_EQ(current->provider, "CSI", "provider correct");
     CHECK_EQ(current->source, "manual", "source correct");
+    CHECK_EQ(current_mapping_count(db, "510300"), 1, "exactly one current mapping");
 
     db.close();
     std::filesystem::remove(path);
@@ -80,6 +94,24 @@ void test_get_current_returns_latest() {
     auto current = repo.get_current("510300");
     CHECK(current.has_value(), "get_current returns value");
     CHECK_EQ(current->benchmark_code, "000905", "second mapping is current");
+    CHECK_EQ(current_mapping_count(db, "510300"), 1, "changing mapping keeps one current mapping");
+
+    db.close();
+    std::filesystem::remove(path);
+}
+
+void test_repeat_set_is_idempotent() {
+    auto path = unique_db_path();
+    auto db = setup_db(path);
+    add_fund(db, "510300", Exchange::SSE, "沪深300ETF");
+
+    BenchmarkRepository repo(db);
+    CHECK(repo.set("510300", "000300", "沪深300", "CSI", "manual"), "first set succeeds");
+    CHECK(repo.set("510300", "000300", "沪深300", "CSI", "manual"), "repeated set succeeds");
+
+    const auto history = repo.get_history("510300");
+    CHECK_EQ(history.size(), 1u, "repeated set does not create a duplicate history record");
+    CHECK_EQ(current_mapping_count(db, "510300"), 1, "repeated set keeps one current mapping");
 
     db.close();
     std::filesystem::remove(path);
@@ -158,6 +190,7 @@ int main() {
     test_set_benchmark();
     test_get_current_returns_latest();
     test_get_history();
+    test_repeat_set_is_idempotent();
     test_exists();
     test_no_mapping();
     test_different_funds_independent();
